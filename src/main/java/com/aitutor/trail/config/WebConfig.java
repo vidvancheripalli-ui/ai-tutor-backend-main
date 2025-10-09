@@ -14,7 +14,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://tutor-nexus-96.vercel.app")
+                        .allowedOrigins("https://ai-tutor-app-kappa.vercel.app")
                         .allowedMethods("*");
             }
         };
