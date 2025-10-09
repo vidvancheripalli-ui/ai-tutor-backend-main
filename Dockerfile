@@ -1,15 +1,27 @@
-# Use a lightweight Java 17 base image
-FROM openjdk:17-jdk-slim
+# Stage 1: Build
+FROM maven:3.9.2-eclipse-temurin-17 AS build
 
-# Set working directory inside the container
 WORKDIR /app
 
-# Copy the built JAR from target/ into the container
-COPY target/Ai-tutor-0.0.1-SNAPSHOT.jar app.jar
+# Copy Maven config and project files
+COPY pom.xml .
+COPY mvnw .
+COPY .mvn/ .mvn/
+COPY src/ src/
 
-# Expose the port your Spring Boot app will run on
+# Build the Spring Boot JAR
+RUN ./mvnw clean package -DskipTests
+
+# Stage 2: Run
+FROM eclipse-temurin:17-jdk-jammy
+
+WORKDIR /app
+
+# Copy the built JAR from the previous stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose the port Render uses
 EXPOSE 8080
 
-# Run the Spring Boot app, using the PORT environment variable from Render
-ENTRYPOINT ["java", "-Dserver.port=$PORT", "-jar", "app.jar"]
-
+# Run the app with dynamic port
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar app.jar"]
