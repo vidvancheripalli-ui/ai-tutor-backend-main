@@ -1,14 +1,24 @@
-# Use a lightweight Java 17 base image
-FROM openjdk:17-jdk-slim
+# Use Java 17 with Maven installed
+FROM maven:3.9.2-eclipse-temurin-17 AS build
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the built JAR from target/ into the container
-COPY target/Ai-tutor-0.0.1-SNAPSHOT.jar app.jar
+# Copy Maven files
+COPY pom.xml .
+COPY src ./src
 
-# Expose the port your Spring Boot app will run on
+# Build the JAR
+RUN mvn clean package -DskipTests
+
+# Second stage: runtime
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# Copy JAR from build stage
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
 
-# Run the Spring Boot app, using the PORT environment variable from Render
 ENTRYPOINT ["java", "-Dserver.port=$PORT", "-jar", "app.jar"]
+
